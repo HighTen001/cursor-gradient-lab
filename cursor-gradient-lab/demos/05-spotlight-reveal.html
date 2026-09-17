@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>05 — Spotlight Mask Reveal | Cursor Gradient Lab</title>
+  <link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=clash-display@600,700&f[]=satoshi@400,500,700&display=swap" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #000000;
+      color: #ffffff;
+      font-family: 'Satoshi', sans-serif;
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+    }
+    #reveal-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+    .hud {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      pointer-events: none;
+      padding: 3rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .hud-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .back-btn {
+      pointer-events: auto;
+      font-family: 'Clash Display', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      color: #FF7ABD;
+      text-decoration: none;
+      padding: 0.6rem 1.2rem;
+      border: 1px solid rgba(255, 122, 189, 0.3);
+      border-radius: 4px;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+    }
+    .back-btn:hover {
+      background: #FF7ABD;
+      color: #000000;
+    }
+    .demo-tag {
+      font-family: 'Clash Display', sans-serif;
+      font-size: 0.85rem;
+      letter-spacing: 0.2em;
+      color: rgba(255, 255, 255, 0.6);
+    }
+    .hud-bottom {
+      max-width: 500px;
+    }
+    .hud-title {
+      font-family: 'Clash Display', sans-serif;
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 700;
+      line-height: 1;
+      margin-bottom: 0.75rem;
+    }
+    .hud-desc {
+      font-size: 1rem;
+      color: rgba(255, 255, 255, 0.7);
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="reveal-canvas"></canvas>
+
+  <div class="hud">
+    <div class="hud-top">
+      <a href="../index.html" class="back-btn">&larr; BACK TO GALLERY</a>
+      <span class="demo-tag">DEMO 05 / 08</span>
+    </div>
+    <div class="hud-bottom">
+      <h1 class="hud-title">SPOTLIGHT MASK REVEAL</h1>
+      <p class="hud-desc">Darkroom mask spotlight revealing a vibrant animated neon gradient canvas underneath the cursor pointer.</p>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('reveal-canvas');
+    const ctx = canvas.getContext('2d');
+
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    let mouse = { x: canvas.width / 2, y: canvas.height / 2 };
+    let spotlightPos = { x: mouse.x, y: mouse.y };
+    let time = 0;
+
+    window.addEventListener('mousemove', (e) => {
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
+    });
+
+    function drawUnderlyingGradient() {
+      // Animated multi-point gradient background
+      const angle = time * 0.5;
+      const x1 = canvas.width / 2 + Math.cos(angle) * 300;
+      const y1 = canvas.height / 2 + Math.sin(angle) * 300;
+
+      const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+      grad.addColorStop(0, '#FF7ABD');
+      grad.addColorStop(0.5, '#56A8F4');
+      grad.addColorStop(1, '#9456ED');
+
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Draw background pattern
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+      ctx.lineWidth = 2;
+      const step = 60;
+      for (let x = 0; x < canvas.width; x += step) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
+        ctx.stroke();
+      }
+    }
+
+    function render() {
+      time += 0.02;
+
+      // Smooth spotlight tracking
+      spotlightPos.x += (mouse.x - spotlightPos.x) * 0.12;
+      spotlightPos.y += (mouse.y - spotlightPos.y) * 0.12;
+
+      // 1. Draw hidden vibrant background
+      drawUnderlyingGradient();
+
+      // 2. Apply dark mask with composite operations
+      ctx.globalCompositeOperation = 'destination-in';
+
+      const radius = 220;
+      const spotGrad = ctx.createRadialGradient(
+        spotlightPos.x, spotlightPos.y, 0,
+        spotlightPos.x, spotlightPos.y, radius
+      );
+      spotGrad.addColorStop(0, 'rgba(0, 0, 0, 1)');
+      spotGrad.addColorStop(0.7, 'rgba(0, 0, 0, 0.8)');
+      spotGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+      ctx.fillStyle = spotGrad;
+      ctx.beginPath();
+      ctx.arc(spotlightPos.x, spotlightPos.y, radius, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.globalCompositeOperation = 'source-over';
+
+      requestAnimationFrame(render);
+    }
+
+    render();
+  </script>
+</body>
+</html>

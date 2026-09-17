@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>03 — Aurora Ribbons | Cursor Gradient Lab</title>
+  <link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=clash-display@600,700&f[]=satoshi@400,500,700&display=swap" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #03080A;
+      color: #ffffff;
+      font-family: 'Satoshi', sans-serif;
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+    }
+    #aurora-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+    .hud {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      pointer-events: none;
+      padding: 3rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .hud-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .back-btn {
+      pointer-events: auto;
+      font-family: 'Clash Display', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      color: #00FF87;
+      text-decoration: none;
+      padding: 0.6rem 1.2rem;
+      border: 1px solid rgba(0, 255, 135, 0.3);
+      border-radius: 4px;
+      background: rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+    }
+    .back-btn:hover {
+      background: #00FF87;
+      color: #000000;
+    }
+    .demo-tag {
+      font-family: 'Clash Display', sans-serif;
+      font-size: 0.85rem;
+      letter-spacing: 0.2em;
+      color: rgba(255, 255, 255, 0.6);
+    }
+    .hud-bottom {
+      max-width: 500px;
+    }
+    .hud-title {
+      font-family: 'Clash Display', sans-serif;
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 700;
+      line-height: 1;
+      margin-bottom: 0.75rem;
+    }
+    .hud-desc {
+      font-size: 1rem;
+      color: rgba(255, 255, 255, 0.7);
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="aurora-canvas"></canvas>
+
+  <div class="hud">
+    <div class="hud-top">
+      <a href="../index.html" class="back-btn">&larr; BACK TO GALLERY</a>
+      <span class="demo-tag">DEMO 03 / 08</span>
+    </div>
+    <div class="hud-bottom">
+      <h1 class="hud-title">AURORA RIBBONS</h1>
+      <p class="hud-desc">Multi-layered sine ribbons that warp and shift hues based on mouse position and cursor drag velocity.</p>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('aurora-canvas');
+    const ctx = canvas.getContext('2d');
+
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    let mouse = { x: canvas.width / 2, y: canvas.height / 2, targetX: canvas.width / 2, targetY: canvas.height / 2 };
+    let time = 0;
+
+    window.addEventListener('mousemove', (e) => {
+      mouse.targetX = e.clientX;
+      mouse.targetY = e.clientY;
+    });
+
+    const ribbons = [
+      { color1: 'rgba(0, 255, 135, 0.4)', color2: 'rgba(0, 212, 255, 0)', speed: 0.008, amp: 80, freq: 0.005 },
+      { color1: 'rgba(112, 0, 255, 0.35)', color2: 'rgba(0, 255, 135, 0)', speed: 0.012, amp: 110, freq: 0.003 },
+      { color1: 'rgba(0, 240, 255, 0.4)', color2: 'rgba(112, 0, 255, 0)', speed: 0.006, amp: 90, freq: 0.004 },
+      { color1: 'rgba(255, 0, 122, 0.25)', color2: 'rgba(0, 240, 255, 0)', speed: 0.01, amp: 130, freq: 0.002 }
+    ];
+
+    function render() {
+      time += 0.015;
+
+      // Smooth lerp mouse
+      mouse.x += (mouse.targetX - mouse.x) * 0.05;
+      mouse.y += (mouse.targetY - mouse.y) * 0.05;
+
+      ctx.fillStyle = '#03080A';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.globalCompositeOperation = 'screen';
+
+      ribbons.forEach((r, idx) => {
+        ctx.beginPath();
+        const baseOffsetY = canvas.height * 0.3 + idx * 120;
+
+        ctx.moveTo(0, canvas.height);
+
+        for (let x = 0; x <= canvas.width; x += 15) {
+          // Cursor distance influence
+          const distToMouse = Math.abs(x - mouse.x);
+          const mouseEffect = Math.max(0, (400 - distToMouse) / 400) * (mouse.y - baseOffsetY) * 0.5;
+
+          const y = baseOffsetY + 
+                    Math.sin(x * r.freq + time * r.speed * 100 + idx) * r.amp +
+                    Math.cos(x * 0.002 - time * 0.5) * 40 + 
+                    mouseEffect;
+
+          if (x === 0) {
+            ctx.moveTo(x, y);
+          } else {
+            ctx.lineTo(x, y);
+          }
+        }
+
+        ctx.lineTo(canvas.width, canvas.height);
+        ctx.lineTo(0, canvas.height);
+        ctx.closePath();
+
+        const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        grad.addColorStop(0, r.color1);
+        grad.addColorStop(1, r.color2);
+
+        ctx.fillStyle = grad;
+        ctx.fill();
+      });
+
+      ctx.globalCompositeOperation = 'source-over';
+
+      requestAnimationFrame(render);
+    }
+
+    render();
+  </script>
+</body>
+</html>

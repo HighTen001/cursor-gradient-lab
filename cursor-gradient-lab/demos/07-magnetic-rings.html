@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>07 — Magnetic Concentric Rings | Cursor Gradient Lab</title>
+  <link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=clash-display@600,700&f[]=satoshi@400,500,700&display=swap" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #06070B;
+      color: #ffffff;
+      font-family: 'Satoshi', sans-serif;
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+    }
+    #rings-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+    .hud {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      pointer-events: none;
+      padding: 3rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .hud-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .back-btn {
+      pointer-events: auto;
+      font-family: 'Clash Display', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      color: #9456ED;
+      text-decoration: none;
+      padding: 0.6rem 1.2rem;
+      border: 1px solid rgba(148, 86, 237, 0.35);
+      border-radius: 4px;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+    }
+    .back-btn:hover {
+      background: #9456ED;
+      color: #000000;
+    }
+    .demo-tag {
+      font-family: 'Clash Display', sans-serif;
+      font-size: 0.85rem;
+      letter-spacing: 0.2em;
+      color: rgba(255, 255, 255, 0.6);
+    }
+    .hud-bottom {
+      max-width: 500px;
+    }
+    .hud-title {
+      font-family: 'Clash Display', sans-serif;
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 700;
+      line-height: 1;
+      margin-bottom: 0.75rem;
+    }
+    .hud-desc {
+      font-size: 1rem;
+      color: rgba(255, 255, 255, 0.7);
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="rings-canvas"></canvas>
+
+  <div class="hud">
+    <div class="hud-top">
+      <a href="../index.html" class="back-btn">&larr; BACK TO GALLERY</a>
+      <span class="demo-tag">DEMO 07 / 08</span>
+    </div>
+    <div class="hud-bottom">
+      <h1 class="hud-title">MAGNETIC CONCENTRIC RINGS</h1>
+      <p class="hud-desc">Elastic gradient rings with staggered spring physics that trail, snap, and distort toward mouse gravity points.</p>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('rings-canvas');
+    const ctx = canvas.getContext('2d');
+
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    let mouse = { x: canvas.width / 2, y: canvas.height / 2 };
+    let time = 0;
+
+    window.addEventListener('mousemove', (e) => {
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
+    });
+
+    const ringCount = 7;
+    const rings = [];
+
+    for (let i = 0; i < ringCount; i++) {
+      rings.push({
+        x: mouse.x,
+        y: mouse.y,
+        radius: (i + 1) * 35 + 15,
+        lineWidth: Math.max(1, 6 - i * 0.7),
+        ease: 0.25 - i * 0.03, // Inner rings move fast, outer rings lag behind
+        color: [
+          '#56A8F4',
+          '#00F0FF',
+          '#9456ED',
+          '#FF7ABD',
+          '#D3A140',
+          '#FF2A85',
+          'rgba(255,255,255,0.4)'
+        ][i]
+      });
+    }
+
+    function render() {
+      time += 0.02;
+
+      ctx.fillStyle = '#06070B';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Draw connecting crosshairs from center
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(mouse.x, 0); ctx.lineTo(mouse.x, canvas.height);
+      ctx.moveTo(0, mouse.y); ctx.lineTo(canvas.width, mouse.y);
+      ctx.stroke();
+
+      rings.forEach((ring, idx) => {
+        // Elastic spring lerp
+        ring.x += (mouse.x - ring.x) * ring.ease;
+        ring.y += (mouse.y - ring.y) * ring.ease;
+
+        // Subtle pulsing wave radius
+        const pulse = Math.sin(time * 3 + idx * 0.5) * 6;
+        const currentRadius = ring.radius + pulse;
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(ring.x, ring.y, currentRadius, 0, Math.PI * 2);
+        ctx.strokeStyle = ring.color;
+        ctx.lineWidth = ring.lineWidth;
+        ctx.shadowColor = ring.color;
+        ctx.shadowBlur = 12;
+        ctx.stroke();
+        ctx.restore();
+      });
+
+      requestAnimationFrame(render);
+    }
+
+    render();
+  </script>
+</body>
+</html>

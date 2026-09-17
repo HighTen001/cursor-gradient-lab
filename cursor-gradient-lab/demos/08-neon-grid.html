@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>08 — Neon Perspective Grid | Cursor Gradient Lab</title>
+  <link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=clash-display@600,700&f[]=satoshi@400,500,700&display=swap" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #030206;
+      color: #ffffff;
+      font-family: 'Satoshi', sans-serif;
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+    }
+    #grid-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+    .hud {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      pointer-events: none;
+      padding: 3rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .hud-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .back-btn {
+      pointer-events: auto;
+      font-family: 'Clash Display', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      color: #FF2A85;
+      text-decoration: none;
+      padding: 0.6rem 1.2rem;
+      border: 1px solid rgba(255, 42, 133, 0.35);
+      border-radius: 4px;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+    }
+    .back-btn:hover {
+      background: #FF2A85;
+      color: #000000;
+    }
+    .demo-tag {
+      font-family: 'Clash Display', sans-serif;
+      font-size: 0.85rem;
+      letter-spacing: 0.2em;
+      color: rgba(255, 255, 255, 0.6);
+    }
+    .hud-bottom {
+      max-width: 500px;
+    }
+    .hud-title {
+      font-family: 'Clash Display', sans-serif;
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 700;
+      line-height: 1;
+      margin-bottom: 0.75rem;
+    }
+    .hud-desc {
+      font-size: 1rem;
+      color: rgba(255, 255, 255, 0.7);
+      line-height: 1.5;
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+  <canvas id="grid-canvas"></canvas>
+
+  <div class="hud">
+    <div class="hud-top">
+      <a href="../index.html" class="back-btn">&larr; BACK TO GALLERY</a>
+      <span class="demo-tag">DEMO 08 / 08</span>
+    </div>
+    <div class="hud-bottom">
+      <h1 class="hud-title">NEON PERSPECTIVE GRID</h1>
+      <p class="hud-desc">3D synthwave grid plane with perspective tilt, horizon fog, and cursor-gravity plane bending.</p>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('grid-canvas');
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x030206, 0.08);
+
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 1.5, 6);
+    camera.rotation.x = -0.2;
+
+    const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+    // Grid Floor
+    const gridHelper = new THREE.GridHelper(60, 60, 0xFF2A85, 0x00F0FF);
+    gridHelper.position.y = -1;
+    scene.add(gridHelper);
+
+    // Horizon Sun / Glow Orb
+    const sunGeo = new THREE.CircleGeometry(4, 32);
+    const sunMat = new THREE.MeshBasicMaterial({ color: 0xFF2A85, transparent: true, opacity: 0.4 });
+    const sun = new THREE.Mesh(sunGeo, sunMat);
+    sun.position.set(0, 2, -20);
+    scene.add(sun);
+
+    const mouse = { x: 0, y: 0, targetX: 0, targetY: 0 };
+
+    window.addEventListener('mousemove', (e) => {
+      mouse.targetX = (e.clientX / window.innerWidth - 0.5) * 2;
+      mouse.targetY = (e.clientY / window.innerHeight - 0.5) * 2;
+    });
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    let clock = new THREE.Clock();
+
+    function animate() {
+      requestAnimationFrame(animate);
+
+      const elapsedTime = clock.getElapsedTime();
+
+      // Infinite forward grid scroll
+      gridHelper.position.z = (elapsedTime * 2) % 1;
+
+      // Mouse camera tilt lerp
+      mouse.x += (mouse.targetX - mouse.x) * 0.05;
+      mouse.y += (mouse.targetY - mouse.y) * 0.05;
+
+      camera.position.x = mouse.x * 2;
+      camera.position.y = 1.5 - mouse.y * 1;
+      camera.rotation.y = -mouse.x * 0.2;
+
+      renderer.render(scene, camera);
+    }
+
+    animate();
+  </script>
+</body>
+</html>

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>02 — Radial Glowing Orb | Cursor Gradient Lab</title>
+  <link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=clash-display@600,700&f[]=satoshi@400,500,700&display=swap" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #050508;
+      color: #ffffff;
+      font-family: 'Satoshi', sans-serif;
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+    }
+    #orb-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+    .hud {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      pointer-events: none;
+      padding: 3rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .hud-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .back-btn {
+      pointer-events: auto;
+      font-family: 'Clash Display', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      color: #FF2A85;
+      text-decoration: none;
+      padding: 0.6rem 1.2rem;
+      border: 1px solid rgba(255, 42, 133, 0.3);
+      border-radius: 4px;
+      background: rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+    }
+    .back-btn:hover {
+      background: #FF2A85;
+      color: #000000;
+    }
+    .demo-tag {
+      font-family: 'Clash Display', sans-serif;
+      font-size: 0.85rem;
+      letter-spacing: 0.2em;
+      color: rgba(255, 255, 255, 0.6);
+    }
+    .hud-bottom {
+      max-width: 500px;
+    }
+    .hud-title {
+      font-family: 'Clash Display', sans-serif;
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 700;
+      line-height: 1;
+      margin-bottom: 0.75rem;
+    }
+    .hud-desc {
+      font-size: 1rem;
+      color: rgba(255, 255, 255, 0.7);
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="orb-canvas"></canvas>
+
+  <div class="hud">
+    <div class="hud-top">
+      <a href="../index.html" class="back-btn">&larr; BACK TO GALLERY</a>
+      <span class="demo-tag">DEMO 02 / 08</span>
+    </div>
+    <div class="hud-bottom">
+      <h1 class="hud-title">RADIAL GLOWING ORB</h1>
+      <p class="hud-desc">High-inertia dual-layer neon orb with spring physics. Fast cursor movements dynamically expand the ambient aura.</p>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('orb-canvas');
+    const ctx = canvas.getContext('2d');
+
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    let mouse = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+    let prevMouse = { x: mouse.x, y: mouse.y };
+    let velocity = 0;
+
+    // Outer Aura Pos (Slow lerp)
+    let aura = { x: mouse.x, y: mouse.y };
+    // Inner Core Pos (Fast lerp)
+    let core = { x: mouse.x, y: mouse.y };
+
+    window.addEventListener('mousemove', (e) => {
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
+    });
+
+    function render() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Calculate cursor velocity
+      const dx = mouse.x - prevMouse.x;
+      const dy = mouse.y - prevMouse.y;
+      const speed = Math.sqrt(dx * dx + dy * dy);
+      velocity += (speed - velocity) * 0.1;
+      prevMouse.x = mouse.x;
+      prevMouse.y = mouse.y;
+
+      // Lerp physics
+      aura.x += (mouse.x - aura.x) * 0.04;
+      aura.y += (mouse.y - aura.y) * 0.04;
+
+      core.x += (mouse.x - core.x) * 0.15;
+      core.y += (mouse.y - core.y) * 0.15;
+
+      // Dynamic aura radius based on speed
+      const baseRadius = 250;
+      const dynamicRadius = baseRadius + Math.min(velocity * 8, 180);
+
+      // 1. Draw Outer Ambient Glow (Aura)
+      const auraGrad = ctx.createRadialGradient(
+        aura.x, aura.y, 10,
+        aura.x, aura.y, dynamicRadius
+      );
+      auraGrad.addColorStop(0, 'rgba(255, 42, 133, 0.45)');
+      auraGrad.addColorStop(0.4, 'rgba(148, 86, 237, 0.25)');
+      auraGrad.addColorStop(0.8, 'rgba(86, 168, 244, 0.08)');
+      auraGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+      ctx.fillStyle = auraGrad;
+      ctx.beginPath();
+      ctx.arc(aura.x, aura.y, dynamicRadius, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 2. Draw Inner Core Light
+      const coreRadius = 80;
+      const coreGrad = ctx.createRadialGradient(
+        core.x, core.y, 0,
+        core.x, core.y, coreRadius
+      );
+      coreGrad.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
+      coreGrad.addColorStop(0.3, 'rgba(255, 42, 133, 0.8)');
+      coreGrad.addColorStop(0.7, 'rgba(148, 86, 237, 0.3)');
+      coreGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+      ctx.fillStyle = coreGrad;
+      ctx.beginPath();
+      ctx.arc(core.x, core.y, coreRadius, 0, Math.PI * 2);
+      ctx.fill();
+
+      requestAnimationFrame(render);
+    }
+
+    render();
+  </script>
+</body>
+</html>
